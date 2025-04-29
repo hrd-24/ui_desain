@@ -38,7 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
     int? userId = prefs.getInt('user_id'); // Ambil ID user yang login
 
     if (userId != null) {
-      final user = await dbHelper.getUserById(userId); // Ambil data user dari database
+      final user = await dbHelper.getUserById(
+        userId,
+      ); // Ambil data user dari database
 
       setState(() {
         namaPengguna = user?['name'] ?? 'User';
@@ -124,79 +126,151 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F6F0),
-      appBar: AppBar(
-        title: const Text('Dashboard Absensi'),
-        backgroundColor: appBarBG(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-          ),
-        ],
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Color(0xFFF8F6F0),
+    appBar: AppBar(
+      title: const Text('Dashboard Absensi'),
+      backgroundColor: appBarBG(),
+      leading: IconButton(
+        icon: const Icon(Icons.logout),
+        onPressed: logout,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: _loading
-            ? Center(child: CircularProgressIndicator())
-            : Column(
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.person),
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+            _loadNamaPengguna();
+          },
+        ),
+      ],
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: _loading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Selamat datang, ${namaPengguna.isEmpty ? "User" : namaPengguna}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Selamat datang,',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            namaPengguna.isEmpty ? "User" : namaPengguna,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            getFormattedDate(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    getFormattedDate(),
-                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                  SizedBox(height: 20),
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    color: Colors.blue[50],
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text(
+                                "Lokasi Saat Ini",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            _currentAddress,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    "Lokasi Saat Ini:",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 4),
-                  Text(_currentAddress),
-                  SizedBox(height: 32),
+                  SizedBox(height: 30),
                   Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: _isAbsenMasukPressed ? null : _handleAbsenMasuk,
-                        child: Text("Absen Masuk"),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isAbsenMasukPressed ? null : _handleAbsenMasuk,
+                          icon: Icon(Icons.login),
+                          label: Text("Absen Masuk"),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            textStyle: TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
                       SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: !_isAbsenMasukPressed ? null : _handleAbsenPulang,
-                        child: Text("Absen Pulang"),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: !_isAbsenMasukPressed ? null : _handleAbsenPulang,
+                          icon: Icon(Icons.logout),
+                          label: Text("Absen Pulang"),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            textStyle: TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ListAbsen()),
-          );
-        },
-        backgroundColor: appBarBG(),
-        child: Icon(Icons.list),
-      ),
-    );
-  }
+            ),
+    ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ListAbsen()),
+        );
+      },
+      backgroundColor: appBarBG(),
+      child: Icon(Icons.list),
+    ),
+  );
 }
-
+}

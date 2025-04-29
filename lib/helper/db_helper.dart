@@ -106,6 +106,17 @@ Future<Map<String, dynamic>?> getUserById(int id) async {
     );
   }
 
+  Future<void> updateUserName(int userId, String newName) async {
+  final db = await database;
+  await db.update(
+    'users', // ganti sesuai nama tabel kamu
+    {'name': newName},
+    where: 'id = ?',
+    whereArgs: [userId],
+  );
+}
+
+
   Future<Map<String, dynamic>?> getLastAbsenWithoutPulang() async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(

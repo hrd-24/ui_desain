@@ -20,23 +20,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     loadProfile();
   }
 
-Future<void> loadProfile() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  int? userId = prefs.getInt('user_id'); // asumsi kamu simpan user id saat login
+  Future<void> loadProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? userId = prefs.getInt(
+      'user_id',
+    ); // asumsi kamu simpan user id saat login
 
-  if (userId != null) {
-    DatabaseHelper dbHelper = DatabaseHelper();
-    Map<String, dynamic>? user = await dbHelper.getUserById(userId);
+    if (userId != null) {
+      DatabaseHelper dbHelper = DatabaseHelper();
+      Map<String, dynamic>? user = await dbHelper.getUserById(userId);
 
-    if (user != null) {
-      setState(() {
-        name = user['name'] ?? "Nama Pengguna";
-        email = user['email'] ?? "email@example.com";
-      });
+      if (user != null) {
+        setState(() {
+          name = user['name'] ?? "Nama Pengguna";
+          email = user['email'] ?? "email@example.com";
+        });
+      }
     }
   }
-}
 
+  void showEditNameDialog(BuildContext context) {
+    TextEditingController nameController = TextEditingController(text: name);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Nama'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(labelText: 'Nama Baru'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                String newName = nameController.text.trim();
+                if (newName.isNotEmpty) {
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  int? userId = prefs.getInt('user_id');
+                  if (userId != null) {
+                    DatabaseHelper dbHelper = DatabaseHelper();
+                    await dbHelper.updateUserName(
+                      userId,
+                      newName,
+                    ); // fungsi update ke database
+                    setState(() {
+                      name = newName;
+                    });
+                  }
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,17 +117,22 @@ Future<void> loadProfile() async {
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.edit,
-                            size: 18,
-                            color: Colors.blueAccent,
+                        child: GestureDetector(
+                          onTap: () {
+                            showEditNameDialog(context);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: const Icon(
+                              Icons.edit,
+                              size: 18,
+                              color: Colors.blueAccent,
+                            ),
                           ),
                         ),
                       ),
